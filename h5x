@@ -2,6 +2,10 @@
 
 fzf="fzf --height 40% --layout=reverse --border"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo $SCRIPT_DIR
+PY_SCRIPT="$SCRIPT_DIR/h5x.py"
+
 # pick h5 file
 file=$(ls *.h5 *.hdf5 2>/dev/null | $fzf)
 [[ -z "$file" ]] && echo "No file selected" && exit
@@ -33,7 +37,7 @@ if [[ $del_options == "group" ]]; then
     done <<< "$selected"
 
     echo "Deleting: $selected"
-    python h5x.py delete "$file" $delete_args
+    python $PY_SCRIPT delete "$file" $delete_args
     exit
 fi
 
@@ -50,7 +54,7 @@ if [[ $del_options == "dataset" ]]; then
     done <<< "$selected"
 
     echo "Deleting: $selected"
-    python h5x.py delete "$file" $delete_args
+    python $PY_SCRIPT delete "$file" $delete_args
     exit
 fi
 
