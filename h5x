@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-fzf="fzf --height 40% --layout=reverse --border"
+fzf="fzf --height 60% --layout=reverse --border"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-echo $SCRIPT_DIR
 PY_SCRIPT="$SCRIPT_DIR/h5x.py"
 
 # pick h5 file
@@ -11,7 +10,7 @@ file=$(ls *.h5 *.hdf5 2>/dev/null | $fzf)
 [[ -z "$file" ]] && echo "No file selected" && exit
 
 # pick operation
-option=$(printf "list\ndel" | $fzf)
+option=$(printf "list\ndel\ncheck_data" | $fzf)
 [[ -z "$option" ]] && exit
 
 if [[ $option == "list" ]]; then
@@ -19,42 +18,55 @@ if [[ $option == "list" ]]; then
     exit
 fi
 
-# delete mode
-del_options=$(printf "group\ndataset" | $fzf)
-[[ -z "$del_options" ]] && exit
+if [[ $option == "check_data" ]]; then
+    datasets=$(h5ls -lr "$file" | awk '/Dataset/ {print $1}' | sed 's/://g')
+    selected_dataset=$(printf "%s\n" "$datasets" | $fzf --preview "h5dump -d {} '$file'" --preview-window "right,60%,wrap")
 
-# SELECT GROUPS
-if [[ $del_options == "group" ]]; then
-    groups=$(h5ls -lr "$file" | awk '/Group/ {print $1}' | sed 's/://g')
-
-    selected=$(printf "%s\n" "$groups" | $fzf --multi --border-label " Select group(s) to delete ")
-    [[ -z "$selected" ]] && echo "No groups selected." && exit
-
-    # Build delete args
-    delete_args=""
-    while IFS= read -r g; do
-        delete_args="$delete_args -d $g"
-    done <<< "$selected"
-
-    echo "Deleting: $selected"
-    python $PY_SCRIPT delete "$file" $delete_args
+    if [[ -n "$selected_dataset" ]]; then
+        h5dump -d "$selected_dataset" "$file" | tee >(wl-copy)
+        echo -e "\n\nCopied to clipboard"
+    fi
     exit
 fi
 
-# SELECT DATASETS
-if [[ $del_options == "dataset" ]]; then
-    datasets=$(h5ls -lr "$file" | awk '/Dataset/ {print $1}' | sed 's/://g')
+if [[ $option == "del" ]]; then
+    # delete mode
+    del_options=$(printf "group\ndataset" | $fzf)
+    [[ -z "$del_options" ]] && exit
 
-    selected=$(printf "%s\n" "$datasets" | $fzf --multi --border-label " Select dataset(s) to delete ")
-    [[ -z "$selected" ]] && echo "No datasets selected." && exit
+    # SELECT GROUPS
+    if [[ $del_options == "group" ]]; then
+        groups=$(h5ls -lr "$file" | awk '/Group/ {print $1}' | sed 's/://g')
 
-    delete_args=""
-    while IFS= read -r d; do
-        delete_args="$delete_args -d $d"
-    done <<< "$selected"
+        selected=$(printf "%s\n" "$groups" | $fzf --multi --border-label " Select group(s) to delete ")
+        [[ -z "$selected" ]] && echo "No groups selected." && exit
 
-    echo "Deleting: $selected"
-    python $PY_SCRIPT delete "$file" $delete_args
-    exit
+        # Build delete args
+        delete_args=""
+        while IFS= read -r g; do
+            delete_args="$delete_args -d $g"
+        done <<< "$selected"
+
+        echo "Deleting: $selected"
+        python $PY_SCRIPT delete "$file" $delete_args
+        exit
+    fi
+
+    # SELECT DATASETS
+    if [[ $del_options == "dataset" ]]; then
+        datasets=$(h5ls -lr "$file" | awk '/Dataset/ {print $1}' | sed 's/://g')
+
+        selected=$(printf "%s\n" "$datasets" | $fzf --multi --border-label " Select dataset(s) to delete ")
+        [[ -z "$selected" ]] && echo "No datasets selected." && exit
+
+        delete_args=""
+        while IFS= read -r d; do
+            delete_args="$delete_args -d $d"
+        done <<< "$selected"
+
+        echo "Deleting: $selected"
+        python $PY_SCRIPT delete "$file" $delete_args
+        exit
+    fi
 fi
 
