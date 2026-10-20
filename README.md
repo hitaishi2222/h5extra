@@ -1,10 +1,10 @@
 # h5extra (`h5x`)
 
-Two ways to work inside `.h5` / `.hdf5` files without leaving the terminal:
+Two ways to work inside `.h5` and `.hdf5` files without leaving the terminal.
 
-- a **Python CLI** for scripting — list the tree, delete groups and datasets;
-- a **bash + fzf** front-end for exploring by hand — browse the tree, preview any
-  dataset with `h5dump`, and copy it to your clipboard.
+A Python CLI handles the scripted work: list the tree, delete groups and datasets.
+A bash script that leans on fzf handles the exploring: browse the tree, preview any
+dataset with `h5dump`, and copy it to your clipboard.
 
 ```
 h5extra
@@ -20,11 +20,11 @@ h5extra
 
 ## Requirements
 
-- Python ≥ 3.12
-- [`h5py`](https://h5py.org) and [`typer`](https://typer.tiangolo.com) (for the Python CLI)
-- HDF5 command-line tools — `h5ls`, `h5dump`
-- [`fzf`](https://github.com/junegunn/fzf) (for the interactive front-end)
-- `wl-copy` / `xclip` / `xsel` / `pbcopy` — only for the clipboard copy in `check_data`
+- Python 3.12 or newer
+- [`h5py`](https://h5py.org) and [`typer`](https://typer.tiangolo.com) for the Python CLI
+- HDF5 command-line tools, `h5ls` and `h5dump`
+- [`fzf`](https://github.com/junegunn/fzf) for the interactive front-end
+- `wl-copy`, `xclip`, `xsel` or `pbcopy`, only for the clipboard copy in `check_data`
 
 ## Install
 
@@ -44,21 +44,21 @@ export PATH="$PATH:$PWD"
 
 ## Python CLI
 
-On Linux use `python3`; on Windows use `python`.
+On Linux use `python3`, on Windows use `python`.
 
-**List all groups and datasets, recursively:**
+List all groups and datasets, recursively:
 
 ```bash
 python3 h5x.py list file.h5
 ```
 
-**Delete a group or dataset** — the path is the absolute path inside the file:
+Delete one group or dataset, named by its absolute path inside the file:
 
 ```bash
 python3 h5x.py delete file.h5 -d /dev/data1
 ```
 
-**Delete several at once** — repeat `-d`:
+Delete several at once by repeating `-d`:
 
 ```bash
 python3 h5x.py delete file.h5 -d /dev/data1 -d /dev/data2
@@ -66,23 +66,25 @@ python3 h5x.py delete file.h5 -d /dev/data1 -d /dev/data2
 
 ## Interactive mode
 
-Run `h5x` in a directory containing `.h5`/`.hdf5` files. It offers three
-operations, each backed by `fzf`:
+Run `h5x` in a directory that holds `.h5` or `.hdf5` files. It offers three
+operations, each backed by fzf:
 
 | Operation | What it does |
 |---|---|
-| `list` | Recursive listing of the file (same as `h5ls -lr`) |
+| `list` | Recursive listing of the file, the same as `h5ls -lr` |
 | `check_data` | Pick a dataset, preview it with `h5dump`, copy the dump to the clipboard |
-| `del` | Pick groups and/or datasets to delete (multi-select), then confirm |
+| `del` | Pick groups or datasets to delete (multi-select), then confirm |
 
 ## Notes
 
-- Deletion is destructive and immediate — `h5x` does not make a backup. Copy the
-  file first if it matters.
-- The Python CLI opens files with `h5py` in `r+` mode for deletion, and never
-  unpickles anything.
-- `h5x` expects `h5x.py` to sit next to it in the same directory.
+Deletion is destructive and immediate. `h5x` makes no backup, so copy the file
+first if it matters.
+
+The Python CLI opens files with `h5py` in `r+` mode for deletion and never
+unpickles anything.
+
+`h5x` expects `h5x.py` to sit next to it in the same directory.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
